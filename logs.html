@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logs - BloxCord</title>
+  <style>
+    :root {
+      --primary-color: #0084ff;
+      --primary-red: #ff0000;
+      --text-white: #ffffff;
+      --bg-dark: #000000;
+      --sidebar-bg: #000000;
+      --glow-color: rgba(255,255,255,0.2);
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-dark);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-white);
+      overflow-x: hidden;
+      background-image: radial-gradient(var(--glow-color) 1px, transparent 1px);
+      background-size: 5px 5px;
+      animation: moveDots 20s linear infinite;
+    }
+    @keyframes moveDots {
+      from { background-position: 0 0; }
+      to { background-position: 100% 0; }
+    }
+    /* Sidebar Navigation */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -200px;
+      width: 200px;
+      height: 100vh;
+      background: var(--sidebar-bg);
+      padding-top: 60px;
+      transition: left 0.3s ease;
+      box-shadow: 0 0 15px 5px var(--glow-color);
+      z-index: 1000;
+    }
+    .sidebar.open {
+      left: 0;
+    }
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      color: var(--text-white);
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+    }
+    /* Hamburger Menu */
+    .menu-btn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 1100;
+      color: var(--text-white);
+      text-shadow: 0 0 10px var(--text-white);
+      user-select: none;
+    }
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 100px auto 0 auto;
+      padding: 20px;
+      text-align: center;
+      animation: fadeInUp 1s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    /* Floating Plus Button */
+    #newLogBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: var(--text-white);
+      font-size: 30px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.3s, transform 0.2s;
+      box-shadow: 0 0 15px 5px var(--glow-color);
+    }
+    #newLogBtn:hover {
+      background: #005bbf;
+      transform: scale(1.1);
+    }
+    /* Log Cards */
+    .log-entry {
+      background: #292b2c;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 15px;
+      text-align: left;
+      display: inline-block;
+      width: 200px;
+      transition: transform 0.3s, opacity 0.5s;
+      opacity: 0;
+    }
+    .log-entry.show {
+      opacity: 1;
+    }
+    .log-entry:hover {
+      transform: scale(1.05);
+    }
+    .delete-btn {
+      background: #ff4d4d;
+      color: var(--text-white);
+      border: none;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin-top: 10px;
+    }
+    /* Popup Form */
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--sidebar-bg);
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+      flex-direction: column;
+      text-align: left;
+      width: 300px;
+      box-shadow: 0 0 15px 5px var(--glow-color);
+      z-index: 1200;
+    }
+    .popup input, .popup textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 5px;
+      background: #333;
+      color: var(--text-white);
+    }
+    .popup button {
+      margin-top: 10px;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .popup .save-btn {
+      background: var(--primary-color);
+      color: var(--text-white);
+    }
+    .popup .close-btn {
+      background: #ff4d4d;
+      color: var(--text-white);
+    }
+  </style>
+</head>
+<body>
+  <!-- Hamburger Menu -->
+  <div class="menu-btn" onclick="toggleSidebar()">&#9776;</div>
+  
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <a href="home.html"><strong>Home</strong></a>
+    <a href="logs.html"><strong>Logs</strong></a>
+    <a href="shifts.html"><strong>Shifts</strong></a>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <h2>Logs</h2>
+    <div id="logContainer"></div>
+  </div>
+  
+  <!-- Floating Plus Button -->
+  <button id="newLogBtn">+</button>
+  
+  <!-- Popup Form -->
+  <div class="popup" id="logPopup">
+    <h3>Create Log</h3>
+    <input type="text" id="yourUsername" placeholder="Your Username">
+    <input type="text" id="theirUsername" placeholder="Their Username">
+    <input type="text" id="logType" placeholder="Type">
+    <input type="text" id="logReason" placeholder="Reason">
+    <textarea id="logNote" placeholder="Note"></textarea>
+    <input type="text" id="logProof" placeholder="Proof (URL)">
+    <button class="save-btn" onclick="saveLog()">Save Log</button>
+    <button class="close-btn" onclick="closePopup()">Close</button>
+  </div>
+  
+  <script>
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("open");
+    }
+    
+    const newLogBtn = document.getElementById("newLogBtn");
+    const logPopup = document.getElementById("logPopup");
+    
+    newLogBtn.addEventListener("click", () => {
+      logPopup.style.display = "flex";
+    });
+    
+    function closePopup() {
+      logPopup.style.display = "none";
+    }
+    
+    let logs = JSON.parse(localStorage.getItem("logs")) || [];
+    
+    function saveLog() {
+      let log = {
+        yourUsername: document.getElementById("yourUsername").value,
+        theirUsername: document.getElementById("theirUsername").value,
+        type: document.getElementById("logType").value,
+        reason: document.getElementById("logReason").value,
+        note: document.getElementById("logNote").value,
+        proof: document.getElementById("logProof").value
+      };
+      logs.push(log);
+      localStorage.setItem("logs", JSON.stringify(logs));
+      renderLogs();
+      closePopup();
+    }
+    
+    function renderLogs() {
+      const logContainer = document.getElementById("logContainer");
+      logContainer.innerHTML = "";
+      logs.forEach((log, index) => {
+        const logEntry = document.createElement("div");
+        logEntry.className = "log-entry show";
+        logEntry.innerHTML = `
+          <strong>${log.yourUsername} ➝ ${log.theirUsername}</strong><br>
+          <strong>Type:</strong> ${log.type}<br>
+          <strong>Reason:</strong> ${log.reason}<br>
+          <strong>Note:</strong> ${log.note}<br>
+          <a href="${log.proof}" target="_blank">View Proof</a><br>
+          <button class="delete-btn" onclick="deleteLog(${index})">Delete</button>
+        `;
+        logContainer.appendChild(logEntry);
+      });
+    }
+    
+    function deleteLog(index) {
+      logs.splice(index, 1);
+      localStorage.setItem("logs", JSON.stringify(logs));
+      renderLogs();
+    }
+    
+    renderLogs();
+  </script>
+</body>
+</html>

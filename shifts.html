@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shifts - BloxCord</title>
+  <style>
+    :root {
+      --primary-red: #ff0000;
+      --primary-color: #0084ff;
+      --text-white: #ffffff;
+      --bg-dark: #000000;
+      --sidebar-bg: #000000;
+      --glow-color: rgba(255,255,255,0.2);
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-dark);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-white);
+      overflow-x: hidden;
+      background-image: radial-gradient(var(--glow-color) 1px, transparent 1px);
+      background-size: 5px 5px;
+      animation: moveDots 20s linear infinite;
+    }
+    @keyframes moveDots {
+      from { background-position: 0 0; }
+      to { background-position: 100% 0; }
+    }
+    /* Sidebar Navigation */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -200px;
+      width: 200px;
+      height: 100vh;
+      background: var(--sidebar-bg);
+      padding-top: 60px;
+      transition: left 0.3s ease;
+      box-shadow: 0 0 15px 5px var(--glow-color);
+      z-index: 1000;
+    }
+    .sidebar.open {
+      left: 0;
+    }
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      color: var(--text-white);
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+    }
+    /* Hamburger Menu */
+    .menu-btn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 1100;
+      color: var(--text-white);
+      text-shadow: 0 0 10px var(--text-white);
+      user-select: none;
+    }
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 100px auto 0 auto;
+      padding: 20px;
+      text-align: center;
+      animation: fadeInUp 1s ease forwards;
+      opacity: 0;
+      position: relative;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    /* Shift Buttons */
+    .shift-btn {
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #startShiftBtn {
+      background: var(--primary-color);
+      color: var(--text-white);
+    }
+    #pauseShiftBtn {
+      background: #ffcc00;
+      color: black;
+      display: none;
+    }
+    #endShiftBtn {
+      background: #ff4d4d;
+      color: var(--text-white);
+      display: none;
+    }
+    /* Green Active Indicator */
+    #activeIndicator {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: limegreen;
+      box-shadow: 0 0 10px limegreen;
+      display: none;
+      z-index: 1200;
+    }
+    /* Shift History Cards */
+    .shift-entry {
+      background: #292b2c;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 15px;
+      text-align: left;
+      display: inline-block;
+      width: 200px;
+      transition: transform 0.3s, opacity 0.5s;
+      opacity: 0;
+    }
+    .shift-entry.show {
+      opacity: 1;
+    }
+    .shift-entry:hover {
+      transform: scale(1.05);
+    }
+    .delete-btn {
+      background: #ff4d4d;
+      color: var(--text-white);
+      border: none;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Hamburger Menu -->
+  <div class="menu-btn" onclick="toggleSidebar()">&#9776;</div>
+  
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <a href="home.html"><strong>Home</strong></a>
+    <a href="logs.html"><strong>Logs</strong></a>
+    <a href="shifts.html"><strong>Shifts</strong></a>
+  </div>
+  
+  <!-- Active Shift Indicator -->
+  <div id="activeIndicator"></div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <h2>Shifts</h2>
+    <button id="startShiftBtn" class="shift-btn">Start Shift</button>
+    <button id="pauseShiftBtn" class="shift-btn">Pause Shift</button>
+    <button id="endShiftBtn" class="shift-btn">End Shift</button>
+    <h3>Shift Log</h3>
+    <div id="shiftContainer"></div>
+  </div>
+  
+  <script>
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("open");
+    }
+    
+    let shifts = JSON.parse(localStorage.getItem("shifts")) || [];
+    let shiftStartTime = null;
+    let shiftPausedTime = null;
+    let shiftDuration = 0;
+    let shiftRunning = false;
+    
+    const startShiftBtn = document.getElementById("startShiftBtn");
+    const pauseShiftBtn = document.getElementById("pauseShiftBtn");
+    const endShiftBtn = document.getElementById("endShiftBtn");
+    const activeIndicator = document.getElementById("activeIndicator");
+    
+    startShiftBtn.addEventListener("click", () => {
+      shiftStartTime = Date.now();
+      shiftPausedTime = null;
+      shiftRunning = true;
+      startShiftBtn.style.display = "none";
+      pauseShiftBtn.style.display = "inline-block";
+      endShiftBtn.style.display = "inline-block";
+      activeIndicator.style.display = "block";
+    });
+    
+    pauseShiftBtn.addEventListener("click", () => {
+      if (shiftRunning) {
+        shiftPausedTime = Date.now();
+        shiftRunning = false;
+        pauseShiftBtn.textContent = "Resume Shift";
+        activeIndicator.style.display = "none";
+      } else {
+        shiftDuration += Date.now() - shiftPausedTime;
+        shiftRunning = true;
+        pauseShiftBtn.textContent = "Pause Shift";
+        activeIndicator.style.display = "block";
+      }
+    });
+    
+    endShiftBtn.addEventListener("click", () => {
+      const shiftEndTime = Date.now();
+      let totalTime = shiftDuration + (shiftEndTime - shiftStartTime);
+      let hours = Math.floor(totalTime / 3600000);
+      let minutes = Math.floor((totalTime % 3600000) / 60000);
+      
+      let shiftLog = {
+        startTime: new Date(shiftStartTime).toLocaleString(),
+        duration: `${hours}h ${minutes}m`
+      };
+      
+      shifts.push(shiftLog);
+      localStorage.setItem("shifts", JSON.stringify(shifts));
+      renderShifts();
+      
+      shiftStartTime = null;
+      shiftPausedTime = null;
+      shiftDuration = 0;
+      shiftRunning = false;
+      startShiftBtn.style.display = "inline-block";
+      pauseShiftBtn.style.display = "none";
+      endShiftBtn.style.display = "none";
+      pauseShiftBtn.textContent = "Pause Shift";
+      activeIndicator.style.display = "none";
+    });
+    
+    function renderShifts() {
+      const shiftContainer = document.getElementById("shiftContainer");
+      shiftContainer.innerHTML = "";
+      shifts.forEach((shift, index) => {
+        const shiftEntry = document.createElement("div");
+        shiftEntry.className = "shift-entry show";
+        shiftEntry.innerHTML = `
+          <strong>Start Time:</strong> ${shift.startTime}<br>
+          <strong>Duration:</strong> ${shift.duration}
+          <button class="delete-btn" onclick="deleteShift(${index})">Delete</button>
+        `;
+        shiftContainer.appendChild(shiftEntry);
+      });
+    }
+    
+    function deleteShift(index) {
+      shifts.splice(index, 1);
+      localStorage.setItem("shifts", JSON.stringify(shifts));
+      renderShifts();
+    }
+    
+    renderShifts();
+  </script>
+</body>
+</html>
